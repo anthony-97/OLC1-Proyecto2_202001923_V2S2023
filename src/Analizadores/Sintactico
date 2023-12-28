@@ -1,0 +1,691 @@
+package Analizadores; 
+import java_cup.runtime.*;
+import Structures.Node;
+import Structures.Arbol;
+import Structures.Production;
+import Structures.Instructions.Operacion;
+import Structures.Instructions.Instruccion;
+
+import Structures.Instructions.VariableGlobal;
+import Structures.Instructions.ObjetoJSON;
+import Structures.Instructions.GraficaBarras;
+import Structures.Instructions.GraficaPie;
+import Utils.Analizador;
+
+import Structures.Instructions.IngresoVariable;
+import Structures.Instructions.Imprimir;
+import Structures.Instructions.If;
+import Structures.Instructions.For;
+import Structures.Instructions.While;
+import Structures.Instructions.Break;
+import Structures.Instructions.Switch;
+import Structures.Instructions.DoWhile;
+import Structures.Instructions.DefGlobales;
+import java.util.LinkedList;
+
+parser code 
+{:
+    /**
+     * Variable en la que se almacena el arbol de sintaxis abstracta que se 
+     * genera luego del analisis sintactico.
+     */
+    public LinkedList<Instruccion> AST;
+    public LinkedList<VariableGlobal> varGlobales = new LinkedList<VariableGlobal>(); //Lista en la que se almacenan las variables globales
+    public GraficaBarras grfBarras = new GraficaBarras(); //grfBarrasActual
+    public GraficaPie grfPie = new GraficaPie(); //grafica de pie actual
+    public Arbol arbol;
+    /**
+     * Metodo al que se llama automaticamente ante algun error sintactico.
+     **/ 
+    public void syntax_error(Symbol s){ 
+        System.out.println("Error Sintactico en la Linea " + (s.left) +
+        " Columna "+s.right+ ". No se esperaba este componente: " +s.value+"."); 
+    } 
+
+    /**
+     * Método al que se llama automaticamente ante algun error sintactico 
+     * en el que ya no es posible una recuperacion de errores.
+     **/ 
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
+        System.out.println("Error sintactico irrecuperable en la Linea " + 
+        (s.left)+ " Columna "+s.right+". Componente " + s.value + 
+        " no reconocido."); 
+    }  
+    public Arbol getArbol() {
+        return arbol;
+    }
+    public LinkedList<Instruccion> getAST() {
+        return AST;
+    }
+:}
+
+terminal String PRENTERO, PRDOBLE, PRBINARIO, PRCARACTER, PRCADENA;
+terminal String PRASIGNACION, PTCOMA, COMA, PUNTO, DOSPUNTOS, PARIZQ, PARDER, CORIZQ, CORDER, LLAVIZQ, LLAVDER, INTERROGACION;
+terminal String MAS, MENOS, POR, DIVIDIDO, POTENCIA, MODULO, MENQUE, MAYQUE, MAYIGUAL, MENIGUAL, IGUAL, NOIGUAL, OR, AND, NOT;
+terminal String INCREMENTO, DECREMENTO, PRSI, PRSINO, PRSELECTOR, PRCASO, PRPORDEFECTO, PRCORTAR;
+terminal String PRPARA, PRMIENTRAS, PRHACER, PRCONTINUAR, PRRETORNO, PRVOID, PRIMPRIMIR, PREJECUTAR;
+terminal String CADENA, CARACTER, ENTERO, DECIMAL, BOOLEANO, IDENTIFICADOR;
+terminal String DOLAR, DEFGLOB, GFRBARRAS, GFRPIE, PRTITULO, PREJEX, PRVALORES, PRTITULOX, PRTITULOY;
+terminal String CADENA, CARACTER, ENTERO, DECIMAL, BOOLEANO, IDENTIFICADOR, NVALOR;
+terminal String UMENOS;
+
+non terminal ini;
+non terminal Production instrucciones;
+non terminal Production instruccion;
+non terminal Production else_ifs;
+non terminal Production variables_globales;
+non terminal Production expresion;
+non terminal Production expresion_global;
+non terminal Production carBarras;
+non terminal Production carBarra;
+non terminal Production valor_barra;
+non terminal Production leyendas;
+non terminal Production lista_valores;
+non terminal Production carPie;
+non terminal Production carsPie;
+non terminal Production casos;
+non terminal Production tpdato_global;
+non terminal Production tipo_dato;
+non terminal Production comp;
+non terminal Production mod;
+
+precedence left MAYIGUAL,MENIGUAL, MAYQUE, MENQUE, IGUAL, NOIGUAL, NOT, AND, OR;
+precedence left MAS,MENOS;
+precedence left POR,DIVIDIDO;
+precedence left UMENOS;
+
+start with ini; 
+
+ini::= instrucciones:a    
+                                                {:
+                                                    //se guarda el AST, que es la lista principal de instrucciones en la variable
+                                                    //AST que se definio dentro del parser
+                                                    parser.AST=a.getInstructions();
+                                                    Node NODERAIZ = new Node("INIT"); NODERAIZ.addSon(a.getNode());
+                                                    parser.arbol=new Arbol(NODERAIZ);
+                                                :}
+;
+
+instrucciones ::= 
+   instrucciones:a instruccion:b                {:
+                                                    RESULT=new Production(new Node("Instrucciones"), a.getInstructions());
+                                                    RESULT.addIns(b.getIns());
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(b);
+                                                :}
+ | instruccion:a                                {:
+                                                    RESULT=new Production(new Node("Instrucciones"), new LinkedList<>());
+                                                    RESULT.addIns(a.getIns());
+                                                    RESULT.addSon(a);
+                                                :}
+ | error PTCOMA
+; 
+
+instruccion ::= 
+   tipo_dato:a IDENTIFICADOR:b ASIGNACION expresion:c PTCOMA    {:
+                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
+                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
+                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable((Operacion)a.getIns(), op, (Operacion)c.getIns() ));
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(b); 
+                                                                    RESULT.addSon("=");
+                                                                    RESULT.addSon(c);
+                                                                    RESULT.addSon(";");
+                                                                :}
+| IDENTIFICADOR:b ASIGNACION expresion:c PTCOMA     {:
+                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
+                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
+                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(null, op, (Operacion)c.getIns() ));
+                                                                    RESULT.addSon(b); 
+                                                                    RESULT.addSon("=");
+                                                                    RESULT.addSon(c);
+                                                                    RESULT.addSon(";");
+                                                                :}               
+| tipo_dato:a IDENTIFICADOR:b PTCOMA                            {:
+                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
+                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
+                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable((Operacion)a.getIns(), op, null ));
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(b); 
+                                                                    RESULT.addSon(";");
+                                                                :}
+
+ | IMPRIMIR PARIZQ expresion:a PARDER PTCOMA  		        {:
+                                                                    RESULT=new Production(new Node("Instruccion"), new Imprimir((Operacion)a.getIns()));
+                                                                    RESULT.addSon("Console.Write");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(";");
+		                                                :}
+ | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:l LLAVDER       
+                                                                {:
+                                                                    //If(condicion:a, listaInstrucciones:b)
+                                                                    RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), l.getInstructions())); 
+                                                                    RESULT.addSon("if");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon("{");
+                                                                    RESULT.addSon(l);
+                                                                    RESULT.addSon("}");
+                                                                :} 
+| PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER PRELSE LLAVIZQ instrucciones:c LLAVDER 
+                                                                            {:
+                                                                                //If(condicion:a, listaInstrucciones:b, listaInsElse:c)
+                                                                              	RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), b.getInstructions(), c.getInstructions()));
+                                                                                RESULT.addSon("if");
+                                                                                RESULT.addSon(a);
+                                                                                RESULT.addSon("{");
+                                                                                RESULT.addSon(b);
+                                                                                RESULT.addSon("} else {");
+                                                                                RESULT.addSon(c);
+                                                                                RESULT.addSon("}");
+                                                                          :}
+ | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER else_ifs:l PRELSE LLAVIZQ instrucciones:c LLAVDER    
+                                                                            {:  
+                                                                                //condicion:a, listaInstrucciones:b, listaElseIfInstrucciones:l, listaInsElse:c 
+                                                                                RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(),b.getInstructions(),l.getInstructions(),c.getInstructions()));
+                                                                                RESULT.addSon("if");
+                                                                                RESULT.addSon(a);
+                                                                                RESULT.addSon("{");
+                                                                                RESULT.addSon(b);
+                                                                                RESULT.addSon(l);
+                                                                                RESULT.addSon("} else {");
+                                                                                RESULT.addSon(c);
+                                                                                RESULT.addSon("}");
+                                                                           :}
+ | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER else_ifs:l    
+                                                                            {:  
+                                                                                //condicion:a, listaInstrucciones:b, listaElseIfInstrucciones:l, listaInsElse:c 
+                                                                                RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(),b.getInstructions(),l.getInstructions(),null));
+                                                                                RESULT.addSon("if");
+                                                                                RESULT.addSon(a);
+                                                                                RESULT.addSon("{");
+                                                                                RESULT.addSon(b);
+                                                                                RESULT.addSon(l);
+                                                                                RESULT.addSon("}");
+                                                                           :}
+| PRSWITCH PARIZQ expresion:a PARDER LLAVIZQ casos:b PRDEFAULT DOSPUNTOS instrucciones:c LLAVDER {:	
+                                                                                //variable, expresion, casos, instrucccionescasos, instruccionesDefault
+                                                                                //sw(variable), case expresion, listaCasos, instrParaCadaCaso, instrPorDefecto
+                                                                                RESULT=new Production(new Node("Instruccion"), new Switch((Operacion)a.getIns(), (Operacion)a.getIns(), b.getInstructions(), c.getInstructions(), c.getInstructions()));
+                                                                                RESULT.addSon("switch");
+                                                                                RESULT.addSon(a);
+                                                                                RESULT.addSon("{");
+                                                                                RESULT.addSon(b);
+                                                                                RESULT.addSon("default");
+                                                                                RESULT.addSon(c);
+                                                                                RESULT.addSon("}");
+                                                                          :} 
+| PRSWITCH PARIZQ expresion:a PARDER LLAVIZQ casos:b LLAVDER      	  {:	//Envio de null pq no hay instr default
+                                                                              RESULT=new Production(new Node("Instruccion"), new Switch((Operacion)a.getIns(), (Operacion)a.getIns(), b.getInstructions(), null));
+                                                                              RESULT.addSon("switch");
+                                                                              RESULT.addSon(a);
+                                                                              RESULT.addSon("{");
+                                                                              RESULT.addSon(b);
+                                                                              RESULT.addSon("}");
+                                                                          :}
+| PRFOR PARIZQ INTPR IDENTIFICADOR:a ASIGNACION expresion:b PTCOMA IDENTIFICADOR comp:c expresion:d PTCOMA IDENTIFICADOR mod:e PARDER LLAVIZQ instrucciones:f LLAVDER	
+                                                                        {:
+                                                                            //For(a,b,d,e,c,f)
+                                                                            //For(variable, inicio, fin, incremento, comparador, l_instrucciones)
+                                                                            Operacion op = new Operacion(a,Operacion.Tipo_operacion.IDENTIFICADOR);                                                                                 
+                                                                            RESULT=new Production(new Node("Instruccion"), new For(op, (Operacion)b.getIns(), (Operacion)d.getIns(), (Operacion)e.getIns(), (Operacion)c.getIns(), f.getInstructions()));
+                                                                            RESULT.addSon("for");
+                                                                            RESULT.addSon(a);
+                                                                            RESULT.addSon("=");
+                                                                            RESULT.addSon(b);
+                                                                            RESULT.addSon("hasta");
+                                                                            RESULT.addSon(d);
+                                                                            RESULT.addSon("hacer");
+                                                                            RESULT.addSon(f);
+                                                                            RESULT.addSon("}");
+                                                                        :}
+| PRWHILE PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER	{:
+                                                                            RESULT=new Production(new Node("Instruccion"), new While((Operacion)a.getIns(), b.getInstructions()));
+                                                                            RESULT.addSon("while");
+                                                                            RESULT.addSon(a);
+                                                                            RESULT.addSon("{");
+                                                                            RESULT.addSon(b);
+                                                                            RESULT.addSon("}");
+                                                                        :}
+| PRDO LLAVIZQ instrucciones:a LLAVDER PRWHILE PARIZQ expresion:b PARDER PTCOMA
+                                                                        {:
+                                                                            RESULT=new Production(new Node("Instruccion"), new DoWhile((Operacion)b.getIns(), a.getInstructions()));
+                                                                            RESULT.addSon("do ");
+                                                                            RESULT.addSon(a);
+                                                                            RESULT.addSon("while");
+                                                                            RESULT.addSon(b);
+                                                                            RESULT.addSon(";");
+                                                                        :}
+| PRBREAK PTCOMA                                		{:
+                                                                   RESULT=new Production(new Node("Instruccion"), new Break());
+                                                                   RESULT.addSon("break");
+                                                                   RESULT.addSon(";");
+                                                                :}
+
+| PRVOID DEFGLOB PARIZQ PARDER LLAVIZQ variables_globales LLAVDER	
+                                                                {:  
+                                                                    RESULT=new Production(new Node("Instruccion"), new DefGlobales());//agregar un metodo traducir en DefGlobales que diga que ya se cargaron las variables globales
+                                                                    RESULT.addSon("definirGlobales");
+                                                                    RESULT.addSon("{");
+                                                                    RESULT.addSon("}");
+                                                                :}	
+| PRVOID GFRBARRAS PARIZQ PARDER LLAVIZQ carBarras LLAVDER	
+                                                                {:  
+                                                                    RESULT=new Production(new Node("Instruccion"), grfBarras); //Se le envia el objeto grfBarras, y al traducir, se hara la grafica
+                                                                    RESULT.addSon("graficaBarras");
+                                                                    RESULT.addSon("{");
+                                                                    RESULT.addSon("}");
+                                                                :}	
+
+| PRVOID GFRPIE PARIZQ PARDER LLAVIZQ carsPie LLAVDER	
+                                                                {:  
+                                                                    RESULT=new Production(new Node("Instruccion"), grfPie); //Se le envia el objeto grfPie y al traducir, se hara la grafica
+                                                                    RESULT.addSon("graficaPie");
+                                                                    RESULT.addSon("{");
+                                                                    RESULT.addSon("}");
+                                                                :}
+;
+
+else_ifs ::= 
+    else_ifs:l PRELSE PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER         
+                                                                 {:                                                                                                  
+                                                                    RESULT=new Production(new Node("else_ifs"), l.getInstructions());
+                                                                    RESULT.addIns(new If((Operacion)a.getIns(), b.getInstructions()));//Metodo org
+                                                                    RESULT.addSon(l);
+                                                                    RESULT.addSon("} else_if {");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(b);
+                                                                 :}
+  | PRELSE PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER                           
+                                                                 {:                                                                                                  
+                                                                    RESULT=new Production(new Node("else_ifs"), new LinkedList<>());
+                                                                    RESULT.addIns(new If((Operacion)a.getIns(), b.getInstructions()));
+                                                                    RESULT.addSon("} else_if {");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(b);
+                                                                 :}
+;
+
+//variables_globales, tpdato_global
+variables_globales ::= variables_globales tpdato_global:a IDENTIFICADOR:b ASIGNACION expresion_global:c PTCOMA 
+                                                                {:    
+                                                                    //VariableGlobal(tipoDato, id, expresion);
+                                                                    VariableGlobal vG;
+                                                                    if(a.getString().equals("string")) {
+                                                                        vG = new VariableGlobal("string", b, c.getString());
+                                                                    } else {
+                                                                        vG = new VariableGlobal("double", b, c.getDouble());
+                                                                    }
+                                                                    varGlobales.add(vG);
+                                                                :}
+ | tpdato_global:a IDENTIFICADOR:b ASIGNACION expresion_global:c PTCOMA 
+                                                                {:    
+                                                                    //VariableGlobal(tipoDato, id, expresion);
+                                                                    VariableGlobal vG;
+                                                                    if(a.getString().equals("string")) {
+                                                                        vG = new VariableGlobal("string", b, c.getString());
+                                                                    } else {
+                                                                        vG = new VariableGlobal("string", b, c.getDouble());;
+                                                                    }
+                                                                    varGlobales.add(vG);
+                                                                :}                    
+;
+
+expresion  ::= 
+    MENOS expresion:a                           {:
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),Operacion.Tipo_operacion.NEGATIVO));
+                                                    RESULT.addSon("-");
+                                                    RESULT.addSon(a);                                                
+                                                :}     
+ |  expresion:a MAS        expresion:b          {:
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(),Operacion.Tipo_operacion.SUMA));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("+");
+                                                    RESULT.addSon(b);
+                                                :}
+ |  expresion:a MENOS      expresion:b          {:
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(),Operacion.Tipo_operacion.RESTA));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("-");
+                                                    RESULT.addSon(b);
+                                                :}
+ |  expresion:a POR        expresion:b          {:
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(),Operacion.Tipo_operacion.MULTIPLICACION));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("*");
+                                                    RESULT.addSon(b);
+                                                :}
+ |  expresion:a DIVIDIDO   expresion:b          {:                                                
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(),Operacion.Tipo_operacion.DIVISION));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("/");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  MAYQUE   expresion:b            {:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.MAYOR_QUE));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(">");
+                                                    RESULT.addSon(b);
+                                                :} 
+ | expresion:a  MENQUE   expresion:b            {:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.MENOR_QUE));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("<");
+                                                    RESULT.addSon(b);
+                                                :}  
+ | expresion:a  MAYIGUAL   expresion:b            {:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.MAYORIGUAL_QUE));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(">=");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  MENIGUAL   expresion:b            {:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.MENORIGUAL_QUE));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("<=");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  NOIGUAL   expresion:b            {:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.NOIGUAL));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("!=");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  IGUAL   expresion:b            	{:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.IGUAL));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("=");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  OR   expresion:b            	{:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.OR));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("||");
+                                                    RESULT.addSon(b);
+                                                :}
+ | expresion:a  AND   expresion:b            	{:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),(Operacion)b.getIns(), Operacion.Tipo_operacion.AND));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("&&");
+                                                    RESULT.addSon(b);
+                                                :}
+ | NOT   expresion:a 				{:
+                                                    RESULT=new Production(new Node("Expresion_Relacional"), new Operacion((Operacion)a.getIns(),Operacion.Tipo_operacion.NOT));
+                                                    RESULT.addSon("!");
+                                                    RESULT.addSon(a);
+                                                :}
+ |  ENTERO:a                                    {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.NUMERO));
+                                                :}
+ |  DECIMAL:a                                   {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.NUMERO));
+                                                :}
+ |  CADENA:a                                    {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.CADENA));
+                                                :}
+ |  CARACTER:a                                  {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.CARACTER));
+                                                :}
+ |  BOOLEANO:a                                  {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.V_F));
+                                                :}
+ |  IDENTIFICADOR:a                                  {:
+                                                    RESULT=new Production(new Node(null, a), new Operacion(a,Operacion.Tipo_operacion.IDENTIFICADOR));
+                                                :}
+ |  PARIZQ expresion:a PARDER                   {:
+                                                    RESULT=new Production(new Node("Expresion"), new Operacion((Operacion)a.getIns(),Operacion.Tipo_operacion.PARENTESIS));
+                                                    RESULT.addSon("(");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(")");
+                                                :}
+;
+
+expresion_global  ::= 
+    DECIMAL:a                                   {:
+                                                    RESULT=new Production(new Node("dcm"), new Double(a));
+                                                :}
+ |  CADENA:a                                    {:
+                                                    RESULT=new Production(new Node("str"), a);
+                                                :}
+ | DOLAR LLAVIZQ NVALOR COMA CADENA:a COMA CADENA:b LLAVDER 
+                                                {: 
+                                                    String nombre = a.replace("\"", "");
+                                                    String id = b.replace("\"", "");
+                                                    boolean encontrado = false;
+                                                    for(ObjetoJSON obj: Analizador.objetosCargados) {
+                                                        if(obj.nombreArchivo.equals(nombre)) {
+                                                            if(obj.id.equals(id)) {
+                                                                if(obj.valorCadena != null) {
+                                                                    RESULT=new Production(new Node("valor"), obj.valorCadena);
+                                                                } else {
+                                                                    RESULT=new Production(new Node("vDouble"), obj.valorDouble) ;
+                                                                }
+                                                                encontrado = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if(!encontrado) System.out.println("NO ENCONTRADO");
+                                                :}
+;
+
+carBarras::= carBarras carBarra:a              {:
+                                                    RESULT = a;
+                                               :}
+
+| carBarra:a                                   {:
+                                                    RESULT = a;
+                                               :}
+;
+
+carsPie::= carsPie carPie:a                    {:
+                                                    RESULT = a;
+                                               :}
+
+| carPie:a                                     {:
+                                                    RESULT = a;
+                                               :}
+;
+
+carBarra::=    
+PRSTRING PRTITULO ASIGNACION valor_barra:a PTCOMA
+                                                {:
+                                                    grfBarras.titulo = a.getString();
+                                                :}
+|  PRSTRING CORIZQ CORDER PREJEX ASIGNACION LLAVIZQ leyendas:a LLAVDER PTCOMA
+                                                {:
+                                                    //RESULT = a.getLeyendas(); //La variable leyendas almacenara la lista de strings
+                                                    grfBarras.listaEjeX = a.getLeyendas();
+                                                :}
+|  PRDOUBLE CORIZQ CORDER PRVALORES ASIGNACION LLAVIZQ lista_valores:a LLAVDER PTCOMA    
+                                                {:
+                                                    //RESULT = a.getValores(); //La variable lista_valores almacenara la lista de doubles
+                                                    grfBarras.listaValores = a.getValores();
+                                                :}
+|  PRSTRING PRTITULOX ASIGNACION valor_barra:a PTCOMA
+                                                {:  
+                                                    grfBarras.tituloX = a.getString();
+                                                    //RESULT = a;
+                                                :}
+|  PRSTRING PRTITULOY ASIGNACION valor_barra:a PTCOMA
+                                                {:
+                                                    grfBarras.tituloY = a.getString();
+                                                    //RESULT = a;
+                                                :}
+;
+
+valor_barra::=
+    DECIMAL:a                                   {:
+                                                    RESULT=new Production(new Node("dcm"), new Double(a));
+                                                :}
+ |  CADENA:a                                    {:
+                                                    RESULT=new Production(new Node("str"), a.replace("\"", ""));
+                                                :}
+ | DOLAR LLAVIZQ NVALOR COMA CADENA:a COMA CADENA:b LLAVDER
+                                                {: 
+                                                    String nombre = a.replace("\"", "");
+                                                    String id = b.replace("\"", "");
+                                                    boolean encontrado = false;
+                                                    for(ObjetoJSON obj: Analizador.objetosCargados) {
+                                                        if(obj.nombreArchivo.equals(nombre)) {
+                                                            if(obj.id.equals(id)) {
+                                                                if(obj.valorCadena != null) {
+                                                                    RESULT=new Production(new Node("valor"), obj.valorCadena);
+                                                                } else {
+                                                                    RESULT=new Production(new Node("vDouble"), obj.valorDouble) ;
+                                                                }
+                                                                encontrado = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    if(!encontrado) System.out.println("NO ENCONTRADO");
+                                                :}
+ |  IDENTIFICADOR:a                             {:
+                                                    boolean encontrado = false;
+                                                    for(VariableGlobal varG: varGlobales) {
+                                                        if(varG.id.equals(a)) {
+                                                            encontrado = true;
+                                                            if(varG.valor != null) {
+                                                                RESULT=new Production(new Node("valor"), varG.valor);
+                                                            } else {
+                                                                RESULT=new Production(new Node("vDouble"), varG.vDouble) ;
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                    if(!encontrado) System.out.println("NO ENCONTRADO");
+                                                :}
+;
+
+//getLeyendas() -> Obtiene la lista de leyendas en String.
+leyendas ::=
+    leyendas:a valor_barra:b            {:          
+                                            RESULT=new Production(new Node("leyendas"), a.getLeyendas(), 0);
+                                            RESULT.addLeyenda(b.getString());
+                                        :}
+    | leyendas:a valor_barra:b COMA     {:           
+                                            RESULT=new Production(new Node("leyendas"), a.getLeyendas(), 0);
+                                            RESULT.addLeyenda(b.getString());
+                                        :}
+    | valor_barra:a COMA                {:                                                                                                  
+                                            RESULT=new Production(new Node("leyendas"), new LinkedList<String>(), 0);
+                                            RESULT.addLeyenda(a.getString());
+                                        :}
+;
+
+lista_valores ::=
+    lista_valores:a valor_barra:b       {:   
+                                            RESULT=new Production(new Node("valores"), a.getValores(), false);
+                                            RESULT.addValor(b.getDouble());                                                                             
+                                        :}
+    | lista_valores:a valor_barra:b COMA {:                                                                                
+                                            RESULT=new Production(new Node("valores"), a.getValores(), false);
+                                            RESULT.addValor(b.getDouble());  
+                                        :}
+    | valor_barra:a COMA                  {:                                                                                                  
+                                            RESULT=new Production(new Node("valores"), new LinkedList<Double>(), false);
+                                            RESULT.addValor(a.getDouble());
+                                        :}
+;
+
+carPie::=    
+PRSTRING PRTITULO ASIGNACION valor_barra:a PTCOMA
+                                                {:
+                                                    grfPie.titulo = a.getString(); //Obtiene el string del valor barra
+                                                    //RESULT = a;
+                                                :}
+|  PRSTRING CORIZQ CORDER PREJEX ASIGNACION LLAVIZQ leyendas:a LLAVDER PTCOMA
+                                                {:
+                                                    //RESULT = a.getLeyendas(); //Se obtiene la lista de leyendas
+                                                    grfPie.listaEjeX = a.getLeyendas();
+                                                :}
+|  PRDOUBLE CORIZQ CORDER PRVALORES ASIGNACION LLAVIZQ lista_valores:a LLAVDER PTCOMA    
+                                                {:
+                                                    //RESULT = a.getValores(); //Se obtiene la lista de valores
+                                                    grfPie.listaValores = a.getValores();
+                                                :}
+;
+
+casos::= 
+	casos:l PRCASE expresion:a DOSPUNTOS instrucciones:b	{:                                                                                
+                                                                    RESULT=new Production(new Node("casos"), l.getInstructions());
+                                                                    //Switch(null, expresion, null, instruccionesCaso);
+                                                                    RESULT.addIns(new Switch(null,(Operacion)a.getIns(),null,b.getInstructions()));                                                    
+                                                                    RESULT.addSon("casos");
+                                                                    RESULT.addSon(l);
+                                                                    RESULT.addSon("case");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(":");
+                                                                    RESULT.addSon(b);
+                                                                :} 
+ | PRCASE expresion:a DOSPUNTOS instrucciones:b                  {:                                                                                
+                                                                    RESULT=new Production(new Node("casos"), new LinkedList<>());
+                                                                    RESULT.addIns(new Switch(null,(Operacion)a.getIns(),null,b.getInstructions())); 
+                                                                    RESULT.addSon("case");
+                                                                    RESULT.addSon(a);
+                                                                    RESULT.addSon(":");
+                                                                    RESULT.addSon(b);
+                                                                :}
+;
+
+tpdato_global  ::=   
+ PRDOUBLE                                       {:
+                                                    RESULT=new Production(new Node("tpDouble"), new String("double"));
+                                                :}
+ |  PRSTRING                                    {:
+                                                    RESULT=new Production(new Node("tpstring"), new String("string"));
+                                                :}
+;
+
+tipo_dato  ::= 
+    INTPR:a			                {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
+                                                    RESULT.addSon(a);                                                
+                                                :}     
+ |  PRDOUBLE:a                                       {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
+                                                    RESULT.addSon(a);
+                                                :}
+ |  PRCHAR:a                                      {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
+                                                    RESULT.addSon(a);
+                                                :}
+ |  PRSTRING:a                                      {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
+                                                    RESULT.addSon(a);
+                                                :}
+ |  PRBOOL:a                                      {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
+                                                    RESULT.addSon(a);
+                                                :}
+;
+
+comp  ::= 
+    MAYQUE:a			                {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.MAY));
+                                                    RESULT.addSon(a);                                                
+                                                :}     
+ |  MENQUE:a          				{:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.MEN));
+                                                    RESULT.addSon(a);
+                                                :}
+ |  MAYIGUAL:a                                  {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.MAYOIG));
+                                                    RESULT.addSon(a);
+                                                :}
+ |  MENIGUAL:a					{:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.MENOIG));
+                                                    RESULT.addSon(a);
+                                                :}
+;
+
+mod  ::= 
+    INCREMENTO:a			        {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.INCR));
+                                                    RESULT.addSon(a);                                                
+                                                :}     
+ |  DECREMENTO:a                                {:
+                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.DECR));
+                                                    RESULT.addSon(a);
+                                                :}
+;
