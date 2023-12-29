@@ -60,13 +60,11 @@ parser code
 :}
 
 terminal String PRENTERO, PRDOBLE, PRBINARIO, PRCARACTER, PRCADENA;
-terminal String PRASIGNACION, PTCOMA, COMA, PUNTO, DOSPUNTOS, PARIZQ, PARDER, CORIZQ, CORDER, LLAVIZQ, LLAVDER, INTERROGACION;
+terminal String ASIGNACION, PTCOMA, COMA, PUNTO, DOSPUNTOS, PARIZQ, PARDER, CORIZQ, CORDER, LLAVIZQ, LLAVDER, INTERROGACION;
 terminal String MAS, MENOS, POR, DIVIDIDO, POTENCIA, MODULO, MENQUE, MAYQUE, MAYIGUAL, MENIGUAL, IGUAL, NOIGUAL, OR, AND, NOT;
 terminal String INCREMENTO, DECREMENTO, PRSI, PRSINO, PRSELECTOR, PRCASO, PRPORDEFECTO, PRCORTAR;
 terminal String PRPARA, PRMIENTRAS, PRHACER, PRCONTINUAR, PRRETORNO, PRVOID, PRIMPRIMIR, PREJECUTAR;
 terminal String CADENA, CARACTER, ENTERO, DECIMAL, BOOLEANO, IDENTIFICADOR;
-terminal String DOLAR, DEFGLOB, GFRBARRAS, GFRPIE, PRTITULO, PREJEX, PRVALORES, PRTITULOX, PRTITULOY;
-terminal String CADENA, CARACTER, ENTERO, DECIMAL, BOOLEANO, IDENTIFICADOR, NVALOR;
 terminal String UMENOS;
 
 non terminal ini;
@@ -122,75 +120,92 @@ instrucciones ::=
 ; 
 
 instruccion ::= 
-   tipo_dato:a IDENTIFICADOR:b ASIGNACION expresion:c PTCOMA    {:
-                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
-                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
-                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable((Operacion)a.getIns(), op, (Operacion)c.getIns() ));
-                                                                    RESULT.addSon(a);
-                                                                    RESULT.addSon(b); 
-                                                                    RESULT.addSon("=");
-                                                                    RESULT.addSon(c);
-                                                                    RESULT.addSon(";");
-                                                                :}
-| IDENTIFICADOR:b ASIGNACION expresion:c PTCOMA     {:
-                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
-                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
-                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(null, op, (Operacion)c.getIns() ));
-                                                                    RESULT.addSon(b); 
-                                                                    RESULT.addSon("=");
-                                                                    RESULT.addSon(c);
-                                                                    RESULT.addSon(";");
-                                                                :}               
-| tipo_dato:a IDENTIFICADOR:b PTCOMA                            {:
-                                                                    Operacion op = new Operacion(b,Operacion.Tipo_operacion.IDENTIFICADOR); //Traduce el nombre del identificador
-                                                                    //Ingreso Variable(tD:a, id:b, expr:c)
-                                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable((Operacion)a.getIns(), op, null ));
-                                                                    RESULT.addSon(a);
-                                                                    RESULT.addSon(b); 
-                                                                    RESULT.addSon(";");
-                                                                :}
+  tipo_dato:a IDENTIFICADOR:b PTCOMA            {:
+                                                    //Ingreso Variable(tD:a, id:b, expr:c)
+                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(a.toString(), b.toString(), null ));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(b); 
+                                                    RESULT.addSon(";");
+                                                :}
+| tipo_dato:a lista_ids:d PTCOMA                {:
+                                                    //Para lista_ids -> IngresoVariable(tD:a, null, null, lista_ids);
+                                                    //Ingreso Variable(tD:a, id:b, expr:c, lNombres:d)
+                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(a.toString(), null,  null, d.getInstructions() ));
+                                                    RESULT.addSon(a); 
+                                                    RESULT.addSon(d);
+                                                    RESULT.addSon(";");
+                                                :}
+| tipo_dato:a IDENTIFICADOR:b ASIGNACION expresion:c PTCOMA    
+                                                {:
+                                                    //Ingreso Variable(tD:a, id:b, expr:c)
+                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(a.toString(), b.toString(), (Operacion)c.getIns() ));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(b); 
+                                                    RESULT.addSon("=");
+                                                    RESULT.addSon(c);
+                                                    RESULT.addSon(";");
+                                                :}
+| tipo_dato:a lista_ids:d ASIGNACION expresion:c PTCOMA
+                                                {:
+                                                    //Para lista_ids -> IngresoVariable(id, null, expresion, listaids);
+                                                    //Ingreso Variable(tD:a, id:b, expr:c, listaids:d)
+                                                    RESULT=new Production(new Node("Instruccion"), new IngresoVariable(a.toString(), null, (Operacion)c.getIns(), d.getInstructions() ));
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(d); 
+                                                    RESULT.addSon("=");
+                                                    RESULT.addSon(c);
+                                                    RESULT.addSon(";");
+                                                :}
+| IDENTIFICADOR:a ASIGNACION expresion:b PTCOMA {:
+                                                    //Asignacion(id:a, expr:b)
+                                                    RESULT=new Production(new Node("Instruccion"), new Asignacion(a.toString(), (Operacion)b.getIns() ));
+                                                    RESULT.addSon(a); 
+                                                    RESULT.addSon("=");
+                                                    RESULT.addSon(b);
+                                                    RESULT.addSon(";");
+                                                :}
 
- | IMPRIMIR PARIZQ expresion:a PARDER PTCOMA  		        {:
-                                                                    RESULT=new Production(new Node("Instruccion"), new Imprimir((Operacion)a.getIns()));
-                                                                    RESULT.addSon("Console.Write");
-                                                                    RESULT.addSon(a);
-                                                                    RESULT.addSon(";");
-		                                                :}
+| IMPRIMIR PARIZQ expresion:a PARDER PTCOMA     {:
+                                                    RESULT=new Production(new Node("Instruccion"), new Imprimir((Operacion)a.getIns()));
+                                                    RESULT.addSon("Console.Write");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(";");
+                                                :}
  | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:l LLAVDER       
-                                                                {:
-                                                                    //If(condicion:a, listaInstrucciones:b)
-                                                                    RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), l.getInstructions())); 
-                                                                    RESULT.addSon("if");
-                                                                    RESULT.addSon(a);
-                                                                    RESULT.addSon("{");
-                                                                    RESULT.addSon(l);
-                                                                    RESULT.addSon("}");
-                                                                :} 
+                                                {:
+                                                    //If(condicion:a, listaInstrucciones:b)
+                                                    RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), l.getInstructions())); 
+                                                    RESULT.addSon("if");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("{");
+                                                    RESULT.addSon(l);
+                                                    RESULT.addSon("}");
+                                                :} 
 | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER PRELSE LLAVIZQ instrucciones:c LLAVDER 
-                                                                            {:
-                                                                                //If(condicion:a, listaInstrucciones:b, listaInsElse:c)
-                                                                              	RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), b.getInstructions(), c.getInstructions()));
-                                                                                RESULT.addSon("if");
-                                                                                RESULT.addSon(a);
-                                                                                RESULT.addSon("{");
-                                                                                RESULT.addSon(b);
-                                                                                RESULT.addSon("} else {");
-                                                                                RESULT.addSon(c);
-                                                                                RESULT.addSon("}");
-                                                                          :}
+                                                {:
+                                                    //If(condicion:a, listaInstrucciones:b, listaInsElse:c)
+                                                    RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(), b.getInstructions(), c.getInstructions()));
+                                                    RESULT.addSon("if");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("{");
+                                                    RESULT.addSon(b);
+                                                    RESULT.addSon("} else {");
+                                                    RESULT.addSon(c);
+                                                    RESULT.addSon("}");
+                                                :}
  | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER else_ifs:l PRELSE LLAVIZQ instrucciones:c LLAVDER    
-                                                                            {:  
-                                                                                //condicion:a, listaInstrucciones:b, listaElseIfInstrucciones:l, listaInsElse:c 
-                                                                                RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(),b.getInstructions(),l.getInstructions(),c.getInstructions()));
-                                                                                RESULT.addSon("if");
-                                                                                RESULT.addSon(a);
-                                                                                RESULT.addSon("{");
-                                                                                RESULT.addSon(b);
-                                                                                RESULT.addSon(l);
-                                                                                RESULT.addSon("} else {");
-                                                                                RESULT.addSon(c);
-                                                                                RESULT.addSon("}");
-                                                                           :}
+                                                {:  
+                                                    //condicion:a, listaInstrucciones:b, listaElseIfInstrucciones:l, listaInsElse:c 
+                                                    RESULT=new Production(new Node("Instruccion"), new If((Operacion)a.getIns(),b.getInstructions(),l.getInstructions(),c.getInstructions()));
+                                                    RESULT.addSon("if");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon("{");
+                                                    RESULT.addSon(b);
+                                                    RESULT.addSon(l);
+                                                    RESULT.addSon("} else {");
+                                                    RESULT.addSon(c);
+                                                    RESULT.addSon("}");
+                                               :}
  | PRIF PARIZQ expresion:a PARDER LLAVIZQ instrucciones:b LLAVDER else_ifs:l    
                                                                             {:  
                                                                                 //condicion:a, listaInstrucciones:b, listaElseIfInstrucciones:l, listaInsElse:c 
@@ -283,6 +298,31 @@ instruccion ::=
                                                                     RESULT.addSon("{");
                                                                     RESULT.addSon("}");
                                                                 :}
+;
+
+lista_ids ::=
+    lista_ids:l IDENTIFICADOR:a  	        {:                                                                                
+                                                    RESULT=new Production(new Node("lista_ids"), l.getInstructions());
+                                                    RESULT.addIns(new IngresoVariable(null, a.toString(), null));
+                                                    RESULT.addSon("lista_ids");
+                                                    RESULT.addSon(l);
+                                                    RESULT.addSon(a);
+                                                :}
+    | lista_ids:l IDENTIFICADOR:a COMA 	        {:                                                                                
+                                                    RESULT=new Production(new Node("lista_ids"), l.getInstructions());
+                                                    RESULT.addIns(new IngresoVariable(null,a.toString(),null));    
+                                                    RESULT.addSon("lista_ids");
+                                                    RESULT.addSon(l);
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(",");
+                                                :}
+    | IDENTIFICADOR:a COMA	                {:                                                                                                  
+                                                    RESULT=new Production(new Node("lista_ids"), new LinkedList<>());
+                                                    RESULT.addIns(new IngresoVariable(null,a.toString(),null));
+                                                    RESULT.addSon("lista_ids");
+                                                    RESULT.addSon(a);
+                                                    RESULT.addSon(",");
+                                                :}
 ;
 
 else_ifs ::= 
@@ -637,26 +677,22 @@ tpdato_global  ::=
                                                 :}
 ;
 
+terminal String PRENTERO, PRDOBLE, PRBINARIO, PRCARACTER, PRCADENA;
 tipo_dato  ::= 
-    INTPR:a			                {:
-                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
-                                                    RESULT.addSon(a);                                                
+    PRENTERO:a			                {:
+                                                    RESULT=a.toString();
                                                 :}     
- |  PRDOUBLE:a                                       {:
-                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
-                                                    RESULT.addSon(a);
+ |  PRDOBLE:a                                  {:
+                                                    RESULT=a.toString();
                                                 :}
- |  PRCHAR:a                                      {:
-                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
-                                                    RESULT.addSon(a);
+ |  PRBINARIO:a                                    {:
+                                                    RESULT=a.toString();
                                                 :}
- |  PRSTRING:a                                      {:
-                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
-                                                    RESULT.addSon(a);
+ |  PRCARACTER:a                                  {:
+                                                    RESULT=a.toString();
                                                 :}
- |  PRBOOL:a                                      {:
-                                                    RESULT=new Production(new Node(a), new Operacion(a,Operacion.Tipo_operacion.VAR));
-                                                    RESULT.addSon(a);
+ |  PRCADENA:a                                  {:
+                                                    RESULT=a.toString();
                                                 :}
 ;
 

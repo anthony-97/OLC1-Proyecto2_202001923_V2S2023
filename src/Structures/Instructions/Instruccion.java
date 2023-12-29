@@ -9,5 +9,5 @@ package Structures.Instructions;
  * @author polares
  */
 public interface Instruccion {
-    
+    public String traducir();
 }
