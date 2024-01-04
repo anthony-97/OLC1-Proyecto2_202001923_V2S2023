@@ -48,16 +48,15 @@ public class IngresoVariable implements Instruccion {
     } 
     
     @Override
-    public String traducir() {
-        String traduccionPython = "";
+    public String interpretar() {
         if(lNombres == null) { //Cuando solo viene un id
             Object valor; //Valor del simbolo
             if(expresion == null) { //No viene un valor a asignar, asignar el default;
                 valor = asignarValorDefecto(tipoDato.toLowerCase());
             } else {
-                valor = expresion.traducir();
+                valor = expresion.interpretar();
             }
-            NodoSim simbolo = new NodoSim(id,tipoDato,"global",valor); //Se crea el simbolo
+            NodoSim simbolo = new NodoSim(id,"Variable", tipoDato,"global",valor); //Se crea el simbolo
             Analizador.anadirSimbolo(simbolo); //Anade el simbolo a la tabla de simbolos
             System.out.println("IngresoVariable -> " + tipoDato + " " + id + " = " + valor.toString());
         } else { //Creacion de varias variables
@@ -65,9 +64,9 @@ public class IngresoVariable implements Instruccion {
                 //Se deben crear las variables con el valor de la expresion
                 ((IngresoVariable) n).asignarExpresion(expresion); //Se obtiene la expresion del ingreso y se le asigna al IngresoVariable que sera traducido
                 ((IngresoVariable) n).asignarTipoDato(tipoDato); //Se le asigna el tipo de dato al IngrewsoVariable que sera traducido
-                n.traducir();
+                n.interpretar();
             }
         }
-        return traduccionPython;
+        return "Se ingreso una variable";
     }
 }

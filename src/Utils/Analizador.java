@@ -6,12 +6,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.LinkedList;
 import Structures.NodoSim;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 
 public class Analizador {
     
     private LinkedList<Instruccion> AST_arbolSintaxisAbstracta;
     private Arbol arbol;
     public static LinkedList<NodoSim> tablaSimbolos = new LinkedList<NodoSim>(); //LinkedList que sera la tabla de simbolos
+    public static String consolaSalida = ""; //Texto que se seteara a la consola de salida
     
     public Analizador() {
     }
@@ -52,9 +57,10 @@ public class Analizador {
             //será inválida y se cargará como null, por lo tanto no deberá ejecutarse
             //es por esto que se hace esta validación.
             if(ins!=null) {
-            	traduccionPython += ins.traducir();
+            	ins.interpretar();
             }
         }
+        imprimirTablaSimbolos();
         traduccionPython += "\nif __name__ == \"__main__\":\n    main()";
         return traduccionPython;
     }
@@ -94,6 +100,62 @@ public class Analizador {
         }
         if(!encontrado) {
             System.out.println("El simbolo con id " + id + " no existe en la tabla de simbolos");
+        }
+    }
+    
+    public void imprimirTablaSimbolos() {
+        for(NodoSim simbolo: tablaSimbolos) {
+            System.out.println("id-> "+ simbolo.id + ", tipo -> " + simbolo.tipo + ", valor -> " + simbolo.valor.toString() + "\n");
+        }
+    }
+    
+    public static void generarReporteTablaSimbolos() throws IOException {
+        FileWriter fichero = null;
+        PrintWriter pw = null;
+        try {
+            String path = "TablaSimbolos.html";
+            fichero = new FileWriter(path);
+            pw = new PrintWriter(fichero);
+            
+            //Comenzamos a escribir el html
+            pw.println("<html>");
+            pw.println("<head><title>Tabla de Simbolos</title></head>");
+            pw.println("<body>");
+            pw.println("<div align=\"center\">");
+            pw.println("<h1>Simbolos</h1>");
+            pw.println("<br></br>");
+            pw.println("<table border=1>");
+            pw.println("<tr>");
+            pw.println("<td>ID</td>");
+            pw.println("<td>ROL</td>");
+            pw.println("<td>TIPO</td>");
+            pw.println("<td>VALOR</td>");
+            pw.println("</tr>");
+
+            for (NodoSim simbolo : tablaSimbolos) {
+                pw.println("<tr>");
+                pw.println("<td>" + simbolo.id + "</td>");
+                pw.println("<td>" + simbolo.rol + "</td>");
+                pw.println("<td>" + simbolo.tipo + "</td>");
+                pw.println("<td>" + simbolo.valor.toString() + "</td>");
+                pw.println("</tr>");
+            }
+
+            pw.println("</table>");
+            pw.println("</div");
+            pw.println("</body>");
+            pw.println("</html>");            
+            
+        } catch (Exception e) {
+        } finally {
+            if (fichero != null) {
+                fichero.close();
+            }
+        }
+        try {
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

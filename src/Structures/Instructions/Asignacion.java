@@ -12,9 +12,9 @@ public class Asignacion implements Instruccion {
     }
     
     @Override
-    public String traducir() {
+    public String interpretar() {
         String traduccionPython = "";
-        Object valor = expresion.traducir(); //Nuevo valor a asignar
+        Object valor = expresion.interpretar(); //Nuevo valor a asignar
         Analizador.asignarValorSimbolo(id, valor); //Busca el simbolo con el id y le asigna el valor
         return traduccionPython;
     }
