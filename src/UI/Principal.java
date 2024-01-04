@@ -16,7 +16,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 public class Principal extends javax.swing.JFrame {
-    public static String analizadorActual = "TRADUCTOR"; //Valores: JSON y TRADUCTOR 
     public static String nombreArchivo;
 	
     private Files fs;
@@ -164,11 +163,7 @@ public class Principal extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        if(analizadorActual.equals("TRADUCTOR")) {
-            textAreaLog.setText("----------------------------------------"+"\n\n\t\t#Traduccion Python\n\n"+a.interpretar(textAreaEditor.getText()) + "/n"+ Analizador.consolaSalida);
-        } else {
-            //textAreaLog.setText("----------------------------------------"+"\n\n\t\tSe han cargado los objetos JSON\n\n"+a.cargarObjetosJSON(textAreaEditor.getText()));
-        }
+        textAreaLog.setText(a.interpretar(textAreaEditor.getText()) + "\n"+ Analizador.consolaSalida);  
     }//GEN-LAST:event_jButton1ActionPerformed
     
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed

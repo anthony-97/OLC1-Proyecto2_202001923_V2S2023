@@ -15,6 +15,7 @@ import Structures.Instructions.Imprimir;
 import Structures.Instructions.Si;
 import Structures.Instructions.Mientras;
 import Structures.Instructions.HacerMientras;
+import Structures.Instructions.Llamada;
 //import Structures.Instructions.Break;
 //import Structures.Instructions.Switch;
 //import Structures.Instructions.DoWhile;
@@ -151,8 +152,8 @@ instruccion ::=
                                                 :}
  | PRVOID IDENTIFICADOR:a PARIZQ PARDER LLAVIZQ instrucciones:l LLAVDER  
                                                 {:
-                                                    //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, l.getInstructions(), false)); //false pq no es llamada
+                                                    //Metodo(id:a, listaInstrucciones:l)
+                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, l.getInstructions()));
                                                     RESULT.addSon("void");
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("{");
@@ -161,7 +162,7 @@ instruccion ::=
                                                 :}
  | IDENTIFICADOR:a PARIZQ PARDER PTCOMA         {:
                                                     //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, null, true)); //true pq es llamada
+                                                    RESULT=new Production(new Node("Instruccion"), new Llamada(a));
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("()");
                                                     RESULT.addSon(";");
@@ -169,7 +170,7 @@ instruccion ::=
  | PREJECUTAR IDENTIFICADOR:a PARIZQ PARDER PTCOMA         
                                                 {:
                                                     //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, null, true)); //true pq es llamada
+                                                    RESULT=new Production(new Node("Instruccion"), new Llamada(a));
                                                     RESULT.addSon("Ejecutar");
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("()");

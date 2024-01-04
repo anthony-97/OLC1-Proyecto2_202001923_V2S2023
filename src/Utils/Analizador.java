@@ -2,6 +2,7 @@ package Utils;
 
 import Structures.Arbol;
 import Structures.Instructions.Instruccion;
+import Structures.Instructions.Metodo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.LinkedList;
@@ -34,8 +35,9 @@ public class Analizador {
             System.out.println("Error fatal en compilación de entrada.");
             System.out.println("Causa: "+ex);
         }
-        String traduccion = ejecutarAST(AST_arbolSintaxisAbstracta);
-        return traduccion;
+        String titulo = ejecutarAST(AST_arbolSintaxisAbstracta);
+        arbol.graficar(); //Se grafica el ast
+        return titulo;
     }
     
     public Arbol getArbol(){
@@ -51,18 +53,22 @@ public class Analizador {
         //Se ejecuta cada instruccion en el ast, es decir, cada instruccion de 
         //la lista principal de instrucciones.
         
-        String traduccionPython = "def main():\n";
+        for(Instruccion ins:ast) {
+            //Carga de metodos
+            if(ins instanceof Metodo) { //Si es una instruccion Metodo, entonces se carga a la tabla de simbolos
+                ins.interpretar();
+            }
+        }
         for(Instruccion ins:ast){
             //Si existe un error léxico o sintáctico en cierta instrucción esta
             //será inválida y se cargará como null, por lo tanto no deberá ejecutarse
             //es por esto que se hace esta validación.
-            if(ins!=null) {
+            if(ins!=null && !(ins instanceof Metodo)) { //Si no son metodos, entonces son llamadas o cualquier otra cosa, se ejecutan
             	ins.interpretar();
             }
         }
         imprimirTablaSimbolos();
-        traduccionPython += "\nif __name__ == \"__main__\":\n    main()";
-        return traduccionPython;
+        return "\t-> ...... Java en español - Consola ...... <-       \n";
     }
     
     public static Object obtenerValor(String id) { //Obtiene el valor de la tabla de simbolos segun el id pasado 

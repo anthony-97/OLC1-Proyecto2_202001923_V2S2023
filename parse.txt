@@ -1,24 +1,35 @@
-void prueba1() {
-    entero a = -4;
-    doble b = 2;
-    entero c = 18;
-    entero d = 4%2;
-    doble e = 10/4;
-    binario f = 8*4 >= 90/3;
-    si(a<c) {
-         imprimir("A es menor que C");
-    } sino si(c == 18) {
-         imprimir("Tuvo que entrar a este si pq si es 18");
-    } sino {
-        imprimir("Este no debe mostrarse");
-    }
-    entero contador = 0;
-     mientras(a<c) {
-         contador++;
-         imprimir("Entro al mientras" + contador + "a = " + a);
-         a = a+2;
-     }
-     imprimir("El valor final de a es" + a);
+void metodo1(){
+
+	entero x = 1;
+	binario bandera;
+	doble y=10.5;
+	
+	mientras(x<10){
+		y = y*2;
+		x = x+1;
+	}
+	imprimir(y);
+	
+	si(bandera == false || y > 10.5){
+		metodo2();
+		y = y/2;
+		imprimir(y);
+	}
 }
 
-prueba1();
+void metodo2(){
+	cadena cad = "hola mundo";
+	caracter ca = 'x';
+	entero h = 10;
+
+	si(ca == 'x' && h <= 10){
+		imprimir(ca);
+		ca = 'a';
+	}
+	h = h-5;
+	imprimir(h);
+	imprimir(ca);
+	imprimir(cad);
+}
+
+ejecutar metodo1();

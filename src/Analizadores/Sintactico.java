@@ -19,6 +19,7 @@ import Structures.Instructions.Imprimir;
 import Structures.Instructions.Si;
 import Structures.Instructions.Mientras;
 import Structures.Instructions.HacerMientras;
+import Structures.Instructions.Llamada;
 import java.util.LinkedList;
 import java_cup.runtime.XMLElement;
 
@@ -659,8 +660,8 @@ class CUP$Sintactico$actions {
 		int lright = ((java_cup.runtime.Symbol)CUP$Sintactico$stack.elementAt(CUP$Sintactico$top-1)).right;
 		Production l = (Production)((java_cup.runtime.Symbol) CUP$Sintactico$stack.elementAt(CUP$Sintactico$top-1)).value;
 		
-                                                    //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, l.getInstructions(), false)); //false pq no es llamada
+                                                    //Metodo(id:a, listaInstrucciones:l)
+                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, l.getInstructions()));
                                                     RESULT.addSon("void");
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("{");
@@ -680,7 +681,7 @@ class CUP$Sintactico$actions {
 		String a = (String)((java_cup.runtime.Symbol) CUP$Sintactico$stack.elementAt(CUP$Sintactico$top-3)).value;
 		
                                                     //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, null, true)); //true pq es llamada
+                                                    RESULT=new Production(new Node("Instruccion"), new Llamada(a));
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("()");
                                                     RESULT.addSon(";");
@@ -698,7 +699,7 @@ class CUP$Sintactico$actions {
 		String a = (String)((java_cup.runtime.Symbol) CUP$Sintactico$stack.elementAt(CUP$Sintactico$top-3)).value;
 		
                                                     //Metodo(id:a, listaInstrucciones:l, esLlamada:esLlamada)
-                                                    RESULT=new Production(new Node("Instruccion"), new Metodo(a, null, true)); //true pq es llamada
+                                                    RESULT=new Production(new Node("Instruccion"), new Llamada(a));
                                                     RESULT.addSon("Ejecutar");
                                                     RESULT.addSon(a);
                                                     RESULT.addSon("()");

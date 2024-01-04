@@ -84,9 +84,16 @@ public class Operacion implements Instruccion{
         if(tipo== Tipo_operacion.DIVISION) {
             Object primero = operadorIzq.interpretar();
             Object segundo = operadorDer.interpretar();
-            if(primero instanceof Integer) { //En los dos vendra un entero
-               return ((int) primero / (int)segundo ); //Castea a int y retorna la division
-            } else if(primero instanceof Double) { //En los dos vendra un double
+            if(primero instanceof Integer && segundo instanceof Integer) { //En los dos vendra un entero
+                if((int) primero % (int) segundo == 0) {
+                    return (int) primero / (int) segundo;
+                }
+               return (double) ((int) primero) / (int) segundo; //Castea a double y retorna la division
+            } else if(primero instanceof Integer && segundo instanceof Double) { //entero double
+               return (double) ((int) primero) / (double) segundo; //Castea y retorna la division
+            } else if(primero instanceof Double && segundo instanceof Integer) { //double entero
+               return (double) ((double) primero) / (int) segundo; //Castea a double y retorna la division
+            } else if(primero instanceof Double && segundo instanceof Double) { //En los dos vendra un double
                 return  ((double) primero / (double)segundo); //Castea a double y retorna la division
             } else {
                 Analizador.consolaSalida += "Error semantico, no se puede hacer la operacion division por restriccion de tipos\n";
@@ -95,10 +102,14 @@ public class Operacion implements Instruccion{
         } else if(tipo== Tipo_operacion.MULTIPLICACION) {
             Object primero = operadorIzq.interpretar();
             Object segundo = operadorDer.interpretar();
-            if(primero instanceof Integer) { //En los dos vendra un entero
+            if(primero instanceof Integer && segundo instanceof Integer) { //En los dos vendra un entero
                return (int) primero * (int)segundo; //Castea a int y retorna la multiplicacion
-            } else if(primero instanceof Double) { //En los dos vendra un double
+            } else if(primero instanceof Double && segundo instanceof Double) { //En los dos vendra un double
                 return (double) primero * (double)segundo; //Castea a double y retorna la multiplicacion
+            } else if(primero instanceof Integer && segundo instanceof Double) { //entero y double
+                return (int) primero * (double)segundo; //Castea a double y retorna la multiplicacion
+            }  else if(primero instanceof Double && segundo instanceof Integer) { //Double y entero
+                return (double) primero * (int)segundo; //Castea a double y retorna la multiplicacion
             } else {
                 Analizador.consolaSalida += "Error semantico, no se puede hacer la operacion multiplicacion por restriccion de tipos\n";
                 return "errorSemantico";
@@ -106,21 +117,29 @@ public class Operacion implements Instruccion{
         } else if(tipo== Tipo_operacion.RESTA) {
             Object primero = operadorIzq.interpretar();
             Object segundo = operadorDer.interpretar();
-            if(primero instanceof Integer) { //En los dos vendra un entero
+            if(primero instanceof Integer && segundo instanceof Integer) { //En los dos vendra un entero
                return (int) primero - (int)segundo; //Castea a int y retorna la resta
-            } else if(primero instanceof Double) { //En los dos vendra un double
+            } else if(primero instanceof Double && segundo instanceof Integer) { //En los dos vendra un double
                 return (double) primero - (double)segundo; //Castea a double y retorna la resta
-            } else {
+            }  else if(primero instanceof Integer && segundo instanceof Double) { //entero y double
+                return (int) primero - (double)segundo; //Castea y retorna la resta
+            }  else if(primero instanceof Double && segundo instanceof Integer) { //Double y entero
+                return (double) primero - (int)segundo; //Castea y retorna la resta
+            }else {
                 Analizador.consolaSalida += "Error semantico, no se puede hacer la operacion resta por restriccion de tipos\n";
                 return "errorSemantico";
             }
         } else if(tipo== Tipo_operacion.SUMA) {
             Object primero = operadorIzq.interpretar();
             Object segundo = operadorDer.interpretar();
-            if(primero instanceof Integer) { //En los dos vendra un entero
+            if(primero instanceof Integer && segundo instanceof Integer) { //En los dos vendra un entero
                return (int) primero + (int)segundo; //Castea a int y retorna la suma
-            } else if(primero instanceof Double) { //En los dos vendra un double
+            } else if(primero instanceof Double && segundo instanceof Double) { //En los dos vendra un double
                 return (double) primero + (double)segundo; //Castea a double y retorna la suma
+            } else if(primero instanceof Integer && segundo instanceof Double) { //entero y double
+                return (int) primero + (double)segundo; //Castea y retorna la suma
+            } else if(primero instanceof Double && segundo instanceof Integer) { //Double y entero
+                return (double) primero + (int)segundo; //Castea y retorna la suma
             } else if(primero instanceof String || segundo instanceof String) { //En los dos vendra una cadena
                 return primero+"" + segundo+""; //Castea a String y retorna la concatenacion de los dos
             } else {
@@ -230,7 +249,7 @@ public class Operacion implements Instruccion{
             Object segundo = operadorDer.interpretar();
             if(primero instanceof Integer) { //En los dos vendra un entero
                return (int) primero >= (int)segundo; //Castea a int y retorna si es mayor o igual que o no
-            } else if(primero instanceof Double) { //En los dos vendra un double
+            } else if(primero instanceof Double || segundo instanceof Double) { //En los dos vendra un double
                 return (double) primero >= (double)segundo; //Castea a double y retorna si es mayor o igual que o no
             }  else {
                 Analizador.consolaSalida += "Error semantico, no se puede hacer la operacion >= por restriccion de tipos\n";
