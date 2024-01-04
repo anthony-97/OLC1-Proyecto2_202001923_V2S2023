@@ -29,7 +29,6 @@ public class Arbol {
         graficar(raiz, s);
         s.append("}");
         graficarArbol(s.toString()); //Lo pasa a dot
-        System.out.println(s.toString());
     }
     
     public void graficar(Node raiz, StringBuilder s){        

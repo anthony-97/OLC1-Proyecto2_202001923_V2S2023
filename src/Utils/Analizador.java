@@ -50,8 +50,6 @@ public class Analizador {
                     + "el árbol no fue cargado de forma adecuada por la existencia\r\n"
                     + "de errores léxicos o sintácticos.");
         }
-        //Se ejecuta cada instruccion en el ast, es decir, cada instruccion de 
-        //la lista principal de instrucciones.
         
         for(Instruccion ins:ast) {
             //Carga de metodos
@@ -59,6 +57,8 @@ public class Analizador {
                 ins.interpretar();
             }
         }
+        //Se ejecuta cada instruccion en el ast, es decir, cada instruccion de 
+        //la lista principal de instrucciones.
         for(Instruccion ins:ast){
             //Si existe un error léxico o sintáctico en cierta instrucción esta
             //será inválida y se cargará como null, por lo tanto no deberá ejecutarse
@@ -68,7 +68,7 @@ public class Analizador {
             }
         }
         imprimirTablaSimbolos();
-        return "\t-> ...... Java en español - Consola ...... <-       \n";
+        return "\t         -> ...... Java en español - Consola ...... <-       \n";
     }
     
     public static Object obtenerValor(String id) { //Obtiene el valor de la tabla de simbolos segun el id pasado 
